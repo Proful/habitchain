@@ -3,6 +3,15 @@ import { useParams } from '@remix-run/react'
 import { useEffect, useState } from 'react'
 import { useSwipeable } from 'react-swipeable'
 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '~/components/ui/dialog'
+import { Textarea } from '~/components/ui/textarea'
+
 export const meta: MetaFunction = () => {
   return [
     { title: 'View Habit' },
@@ -14,6 +23,16 @@ type HabitData = {
   [habitName: string]: {
     [year: string]: {
       [month: string]: number[]
+    }
+  }
+}
+
+type SelectedDayData = {
+  [habitName: string]: {
+    [year: string]: {
+      [month: string]: {
+        [day: string]: string
+      }
     }
   }
 }
@@ -32,10 +51,13 @@ export default function ViewHabit() {
   const [clickedDays, setClickedDays] = useState<number[]>([])
   const [isCurrentDayPressed, setIsCurrentDayPressed] = useState<boolean>(false)
   const [loaded, setLoaded] = useState<boolean>(false)
-  const [selectedDay, setSelectedDay] = useState(_currentDay)
+  const [isOpenDialog, setIsOpenDialog] = useState<boolean>(false)
+  const [todaysDay, setSelectedDay] = useState(_currentDay)
+  const [clickedDay, setClickedDay] = useState(_currentDay)
   const [selectedMonth, setSelectedMonth] = useState(_currentMonth)
   const [selectedYear, setSelectedYear] = useState(_currentYear)
   const [selectedMonthName, setSelectedMonthName] = useState(_currentMonthName)
+  const [singleSelectedDayData, setSingleSelectedDayData] = useState('')
   const [weeks, setWeeks] = useState(null)
 
   const handlers = useSwipeable({
@@ -48,7 +70,6 @@ export default function ViewHabit() {
   })
 
   useEffect(() => {
-    console.log('selectedMonth', selectedMonth)
     if (
       habitData &&
       habitData[habitName!] &&
@@ -107,28 +128,57 @@ export default function ViewHabit() {
     }
   }, [clickedDays, loaded])
 
+  useEffect(() => {
+    let data = JSON.parse(localStorage.getItem('selectedDayData') || '{}')
+    let updatedSelectedData = data || {}
+    if (!updatedSelectedData[habitName!]) {
+      updatedSelectedData[habitName!] = {}
+    }
+
+    if (!updatedSelectedData[habitName!][selectedYear]) {
+      updatedSelectedData[habitName!][selectedYear] = {}
+    }
+
+    if (!updatedSelectedData[habitName!][selectedYear][selectedMonth]) {
+      updatedSelectedData[habitName!][selectedYear][selectedMonth] = {}
+    }
+
+    updatedSelectedData[habitName!][selectedYear][selectedMonth][clickedDay] =
+      singleSelectedDayData
+    localStorage.setItem('selectedDayData', JSON.stringify(updatedSelectedData))
+  }, [singleSelectedDayData])
+
   const handlePress = (selectedDay: number | null) => {
+    setClickedDay(selectedDay!)
     let dt = new Date()
     let day = dt.getDate()
     let month = dt.getMonth() + 1
     let year = dt.getFullYear()
 
-    console.log(day, month, year)
-    console.log(selectedDay, selectedMonth, selectedYear)
+    // console.log(day, month, year)
     if (selectedDay !== null) {
       const isFutureDate =
         year > selectedYear ||
         (year === selectedYear && month < selectedMonth) ||
         (year === selectedYear && month === selectedMonth && day < selectedDay)
 
-      console.log('isFutureDate', isFutureDate)
+      // console.log('isFutureDate', isFutureDate)
 
-      if (!isFutureDate) {
-        setClickedDays((prevClickedDays) =>
-          prevClickedDays.includes(selectedDay)
-            ? prevClickedDays.filter((d) => d !== selectedDay)
-            : [...prevClickedDays, selectedDay],
-        )
+      const isPrevClickedDays = clickedDays.includes(selectedDay)
+      if (!isFutureDate && !isPrevClickedDays) {
+        setClickedDays([...clickedDays, selectedDay])
+      } else if (!isFutureDate && isPrevClickedDays) {
+        let data = JSON.parse(localStorage.getItem('selectedDayData') || '{}')
+        let clickedData =
+          data[habitName!][selectedYear][selectedMonth][selectedDay]
+        if (clickedData) {
+          setSingleSelectedDayData(clickedData)
+        } else {
+          setSingleSelectedDayData('')
+        }
+        // setSelectedDayData(selectedDayData)
+        // console.log('isPrevClickedDays', isPrevClickedDays)
+        setIsOpenDialog(true)
       }
       // Toggle the state for the current day
       if (
@@ -140,6 +190,7 @@ export default function ViewHabit() {
       }
     }
   }
+
   return (
     <div {...handlers} className="flex flex-col p-5 justify-center">
       <div className="screen">
@@ -188,7 +239,7 @@ export default function ViewHabit() {
                   >
                     <span
                       className={`text-center ${
-                        day === selectedDay &&
+                        day === todaysDay &&
                         _currentMonth === selectedMonth &&
                         _currentYear === selectedYear &&
                         !isCurrentDayPressed
@@ -207,6 +258,20 @@ export default function ViewHabit() {
             </div>
           ))
       }
+
+      <Dialog open={isOpenDialog} onOpenChange={setIsOpenDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{`${clickedDay}-${selectedMonthName}-${selectedYear}`}</DialogTitle>
+            <DialogDescription>
+              <Textarea
+                value={singleSelectedDayData}
+                onChange={(e) => setSingleSelectedDayData(e.target.value)}
+              />
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

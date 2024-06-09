@@ -9,8 +9,18 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from '~/components/ui/dialog'
 import { Textarea } from '~/components/ui/textarea'
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '~/components/ui/select'
+import { Button } from '~/components/ui/button'
 
 export const meta: MetaFunction = () => {
   return [
@@ -59,6 +69,10 @@ export default function ViewHabit() {
   const [selectedMonthName, setSelectedMonthName] = useState(_currentMonthName)
   const [singleSelectedDayData, setSingleSelectedDayData] = useState('')
   const [weeks, setWeeks] = useState(null)
+  const [prevDaysToCopy, setPrevDaysToCopy] = useState<string[] | null>(null)
+  const [copyFromDate, setCopyFromDate] = useState<string | undefined>(
+    undefined,
+  )
 
   const handlers = useSwipeable({
     onSwipedLeft: () => {
@@ -176,9 +190,12 @@ export default function ViewHabit() {
         } else {
           setSingleSelectedDayData('')
         }
-        // setSelectedDayData(selectedDayData)
-        // console.log('isPrevClickedDays', isPrevClickedDays)
         setIsOpenDialog(true)
+        let prevDays = getPreviousDates(
+          `${selectedDay}-${selectedMonth}-${selectedYear}`,
+        )
+        console.log('prevDays', prevDays)
+        setPrevDaysToCopy(prevDays)
       }
       // Toggle the state for the current day
       if (
@@ -262,7 +279,60 @@ export default function ViewHabit() {
       <Dialog open={isOpenDialog} onOpenChange={setIsOpenDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{`${clickedDay}-${selectedMonthName}-${selectedYear}`}</DialogTitle>
+            <DialogTitle>
+              {`${clickedDay}-${selectedMonthName}-${selectedYear}`}
+
+              <Dialog>
+                <DialogTrigger>&nbsp;Copy</DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogDescription>
+                      <div className="flex space-x-2">
+                        <Select
+                          value={copyFromDate}
+                          onValueChange={setCopyFromDate}
+                        >
+                          <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Copy from" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {prevDaysToCopy &&
+                              prevDaysToCopy!.map((prev) => (
+                                <SelectItem value={prev} key={prev}>
+                                  {prev}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          onClick={() => {
+                            let data = JSON.parse(
+                              localStorage.getItem('selectedDayData') || '{}',
+                            )
+                            console.log('copyFromDate', copyFromDate, data)
+                            const [day, month, year] = copyFromDate!
+                              .split('-')
+                              .map(Number)
+                            if (
+                              data[habitName!] &&
+                              data[habitName!][year] &&
+                              data[habitName!][year][month] &&
+                              data[habitName!][year][month][day]
+                            ) {
+                              let content = data[habitName!][year][month][day]
+                              console.log('content', content)
+                              setSingleSelectedDayData(content)
+                            }
+                          }}
+                        >
+                          Copy
+                        </Button>
+                      </div>
+                    </DialogDescription>
+                  </DialogHeader>
+                </DialogContent>
+              </Dialog>
+            </DialogTitle>
             <DialogDescription>
               <Textarea
                 value={singleSelectedDayData}
@@ -323,4 +393,29 @@ function chunkArray<T>(array: T[], size: number): T[][] {
     chunkedArray.push(array.slice(i, i + size))
   }
   return chunkedArray
+}
+
+function getPreviousDates(dateStr: string) {
+  // Split the input date string
+  const [day, month, year] = dateStr.split('-').map(Number)
+
+  // Create a new Date object with the provided values
+  const date = new Date(year, month - 1, day) // month is 0-based in JavaScript
+
+  // Initialize an array to hold the previous dates
+  const dates = []
+
+  // Loop to get the previous 5 days
+  for (let i = 1; i <= 5; i++) {
+    const prevDate = new Date(date)
+    prevDate.setDate(date.getDate() - i)
+
+    const prevDay = String(prevDate.getDate()).padStart(2, '0')
+    const prevMonth = String(prevDate.getMonth() + 1).padStart(2, '0') // month is 0-based
+    const prevYear = prevDate.getFullYear()
+
+    dates.push(`${prevDay}-${prevMonth}-${prevYear}`)
+  }
+
+  return dates
 }

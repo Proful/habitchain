@@ -143,6 +143,7 @@ export default function ViewHabit() {
   }, [clickedDays, loaded])
 
   useEffect(() => {
+    if (!singleSelectedDayData || singleSelectedDayData.length === 0) return
     let data = JSON.parse(localStorage.getItem('selectedDayData') || '{}')
     let updatedSelectedData = data || {}
     if (!updatedSelectedData[habitName!]) {
@@ -194,7 +195,6 @@ export default function ViewHabit() {
         let prevDays = getPreviousDates(
           `${selectedDay}-${selectedMonth}-${selectedYear}`,
         )
-        console.log('prevDays', prevDays)
         setPrevDaysToCopy(prevDays)
       }
       // Toggle the state for the current day
@@ -309,7 +309,6 @@ export default function ViewHabit() {
                             let data = JSON.parse(
                               localStorage.getItem('selectedDayData') || '{}',
                             )
-                            console.log('copyFromDate', copyFromDate, data)
                             const [day, month, year] = copyFromDate!
                               .split('-')
                               .map(Number)
@@ -320,7 +319,6 @@ export default function ViewHabit() {
                               data[habitName!][year][month][day]
                             ) {
                               let content = data[habitName!][year][month][day]
-                              console.log('content', content)
                               setSingleSelectedDayData(content)
                             }
                           }}
@@ -336,6 +334,7 @@ export default function ViewHabit() {
             <DialogDescription>
               <Textarea
                 value={singleSelectedDayData}
+                rows={8}
                 onChange={(e) => setSingleSelectedDayData(e.target.value)}
               />
             </DialogDescription>

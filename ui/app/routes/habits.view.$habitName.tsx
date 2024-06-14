@@ -1,5 +1,6 @@
 import type { MetaFunction } from '@remix-run/node'
 import { useParams } from '@remix-run/react'
+import React from 'react'
 import { useEffect, useState } from 'react'
 import {
   Card,
@@ -62,7 +63,17 @@ export default function ViewDetailsHabit() {
                 <CardDescription>{getDayOfWeek(item.date)}</CardDescription>
               </CardHeader>
               <CardContent>
-                <p>{item.value}</p>
+                <p>
+                  {
+                    //@ts-ignore
+                    item.value.split('\n').map((line, index) => (
+                      <React.Fragment key={index}>
+                        {line}
+                        <br />
+                      </React.Fragment>
+                    ))
+                  }
+                </p>
               </CardContent>
             </Card>
           </li>

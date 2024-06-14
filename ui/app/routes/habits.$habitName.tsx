@@ -286,7 +286,26 @@ export default function ViewHabit() {
           <DialogHeader>
             <DialogTitle>
               {`${clickedDay}-${selectedMonthName}-${selectedYear}`}
+            </DialogTitle>
+            <DialogDescription>
+              <Textarea
+                value={singleSelectedDayData}
+                rows={8}
+                onChange={(e) => setSingleSelectedDayData(e.target.value)}
+              />
 
+              <Button
+                onClick={() => {
+                  let updClickedDays = clickedDays.filter(
+                    (cd) => cd !== clickedDay,
+                  )
+                  setClickedDays(updClickedDays)
+                  setIsOpenDialog(false)
+                }}
+                variant={'ghost'}
+              >
+                Reset
+              </Button>
               <Dialog>
                 <DialogTrigger>&nbsp;Copy</DialogTrigger>
                 <DialogContent>
@@ -335,13 +354,6 @@ export default function ViewHabit() {
                   </DialogHeader>
                 </DialogContent>
               </Dialog>
-            </DialogTitle>
-            <DialogDescription>
-              <Textarea
-                value={singleSelectedDayData}
-                rows={8}
-                onChange={(e) => setSingleSelectedDayData(e.target.value)}
-              />
             </DialogDescription>
           </DialogHeader>
         </DialogContent>

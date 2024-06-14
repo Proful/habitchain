@@ -1,5 +1,5 @@
 import type { MetaFunction } from '@remix-run/node'
-import { useParams } from '@remix-run/react'
+import { Link, useParams } from '@remix-run/react'
 import { useEffect, useState } from 'react'
 import { useSwipeable } from 'react-swipeable'
 
@@ -214,7 +214,9 @@ export default function ViewHabit() {
   return (
     <div {...handlers} className="flex flex-col p-5 justify-center">
       <div className="screen">
-        <h1 className="text-xl">{habitName?.toUpperCase()}</h1>
+        <Link to={`/habits/view/${habitName!}`} className="mr-2">
+          {habitName?.toUpperCase()}
+        </Link>
       </div>
       <span className="text-center text-2xl mb-5">{selectedMonthName}</span>
       <div className="flex justify-evenly items-center pb-1.5">

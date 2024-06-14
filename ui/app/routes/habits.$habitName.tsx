@@ -184,8 +184,11 @@ export default function ViewHabit() {
         setClickedDays([...clickedDays, selectedDay])
       } else if (!isFutureDate && isPrevClickedDays) {
         let data = JSON.parse(localStorage.getItem('selectedDayData') || '{}')
-        let clickedData =
-          data[habitName!][selectedYear][selectedMonth][selectedDay]
+        let clickedData
+        try {
+          clickedData =
+            data[habitName!][selectedYear][selectedMonth][selectedDay]
+        } catch (err) {}
         if (clickedData) {
           setSingleSelectedDayData(clickedData)
         } else {
